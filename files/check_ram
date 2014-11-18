@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# 2013, s.andres@syseleven.de
+#
+# managed by sys11-puppet, do not touch manually
+
+
+warn_limit=90
+crit_limit=95
+
+show_help() {
+	echo "Usage: $0 [-w warn_limit|90] [-c crit_limit|95]"
+	echo "Values in %, but do not use % sign"
+	exit 3
+}
+
+human() {	# bytes as input
+#http://awk.freeshell.org/FormatFileSizes
+	((!$#)) && return 1
+	local ret=$1
+	if ((ret / 1024 >= 1)); then ret=$((ret/1024)); else echo -n "$1 B"; return; fi
+	if ((ret / 1024 >= 1)); then ret=$((ret/1024)); else echo -n "$ret kB"; return; fi	
+	if ((ret / 1024 >= 1)); then ret=$((ret/1024)); else echo -n "$ret MB"; return; fi
+	echo -n "$ret GB"
+}
+
+get_process_by_ram() {
+	read process_ram process_id process_name < <(ps -e -o rss,pid,comm= | sort -n -k 1 | tac)
+}
+
+get_ram() {
+	while read  _ buf used free; do
+		[[ $buf != buffers/cache: ]] && continue
+		break
+	done < <(free -k)
+	((total+=used+free))
+	((p_used=100*used/total))
+}
+
+while [[ $1 == -* ]]; do
+        case "$1" in
+                -h|--help|-\?) show_help; exit 1;;
+                -w) if [[ $2  ]]; then
+                                warn_limit=$2; shift 2
+                        else
+                                shift
+                        fi;;
+                -c) if [[ $2 ]]; then
+                                crit_limit=$2; shift 2
+                        else
+                                shift
+                        fi;;
+                -*) echo "invalid option: $1" 1>&2; show_help; exit 1;;
+        esac
+done
+
+if ! [[ $crit_limit =~ ^[0-9]*$ ]]; then
+	echo "'$crit_limit' level for crit_limit is not valid." 2>&1
+	exit 3
+fi
+
+if ! [[ $warn_limit =~ ^[0-9]*$ ]]; then
+	echo "'$warn_limit' level for warn_limit is not valid." 2>&1
+	exit 3
+fi
+
+
+get_ram
+get_process_by_ram
+h_used=$(human $((used*1024)))
+h_free=$(human $((free*1024)))
+h_total=$(human $((total*1024)))
+h_process_ram=$(human $((process_ram*1024)))
+((percentage_process=100*process_ram/total))
+
+echo "RAM-Usage: $p_used% $h_used/$h_total (used/total) (w: $warn_limit% / c: $crit_limit%)"
+echo "Largest process: $process_name ($process_id): $h_process_ram ($percentage_process%)"
+if ((p_used >= crit_limit)); then
+	exit 2
+elif ((p_used >= warn_limit)); then
+	exit 1
+else
+	exit 0
+fi

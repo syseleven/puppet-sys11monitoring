@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# 2012, s.andres@syseleven.de
+# it uses default values when an empty string or non-integer is given to -w|-c
+
+show_help() {
+	echo "Usage: $0 [-p plugindir] [-w warn_limit] [-c crit_limit]" >&2
+	echo "Using -w or -c will override the formular" >&2
+	exit 3
+}
+
+count_cores() {
+	while read type _ _; do
+		[[ $type = processor ]] && ((count++))
+	done < /proc/cpuinfo
+
+	if [[ $count != *[^0-9]* ]]; then
+		echo "$count"
+	else
+		echo "Failed to count cores"
+		exit 3
+	fi
+}
+
+cores=$(count_cores)
+
+# set dynamic limits as default
+
+warn_limit=$((cores*4)),$((cores*3)),$((cores*2))
+crit_limit=$((cores*5)),$((cores*4)),$((cores*3))
+
+
+while [[ $1 == -* ]]; do
+        case "$1" in
+                -h|--help|-\?) show_help; exit 1;;
+                -p) if [[ $2 ]]; then
+                                plugindir=$2; shift 2
+                        else
+                                shift
+                        fi;;
+                -w) if [[ $2 = [0-9]* ]]; then
+                                warn_limit=$2; shift 2
+                        else
+                                shift
+                        fi;;
+                -c) if [[ $2 = [0-9]* ]]; then
+                                crit_limit=$2; shift 2
+                        else
+                                shift
+                        fi;;
+                -*) echo "invalid option: $1" 1>&2; show_help; exit 1;;
+        esac
+done
+
+if [[ $plugindir ]]; then
+	PATH=$plugindir:$PATH
+else
+	# try to guess the plugindir
+	PATH=/usr/lib64/nagios/plugins/:/usr/lib/nagios/plugins/:$PATH
+fi
+
+if ! type check_load >/dev/null 2>&1; then
+	echo "FATAL: check_load is not installed in '$PATH'! Install nagios-plugins" >&2
+	exit 3
+fi
+
+check_load -w "$warn_limit" -c "$crit_limit"
+
+# print highest 10 cpu-usage processes
+while read cpu pid user command; do
+  echo "$cpu $pid $user ${command:0:100}"
+done < <(ps -eo pcpu,pid,user,args | sort -k  1 -r  | head -n 10)
+
