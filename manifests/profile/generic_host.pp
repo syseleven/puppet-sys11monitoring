@@ -5,9 +5,10 @@ class sys11monitoring::profile::generic_host() {
   }
 
   file {'/usr/lib/nagios/plugins/check_hn_load':
-    ensure => file,
-    mode   => '0555',
-    source => "puppet:///modules/$module_name/check_hn_load",
+    ensure  => file,
+    mode    => '0555',
+    source  => "puppet:///modules/$module_name/check_hn_load",
+    require => Package['nagios-plugins-basic'],
   }
 
   sensu::check { 'load':
@@ -20,6 +21,7 @@ class sys11monitoring::profile::generic_host() {
     ensure => file,
     mode   => '0555',
     source => "puppet:///modules/$module_name/check_ram",
+    require => Package['nagios-plugins-basic'],
   }
 
   sensu::check { 'ram':
@@ -34,6 +36,7 @@ class sys11monitoring::profile::generic_host() {
       ensure => file,
       mode   => '0555',
       source => "puppet:///modules/$module_name/check_linux_bonding",
+      require => Package['nagios-plugins-basic'],
     }
 
     sensu::check { 'bonding':
