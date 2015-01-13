@@ -6,12 +6,24 @@
 
 # Directory for all state related to sensu checks
 
-state_dir='/var/local/sensu-state'
-mkdir -p $state_dir
+lockdir=/tmp/check_instance_boot.lock
+if mkdir "$lockdir"; then
+  #echo >&2 "successfully acquired lock"
 
-heat_template=$(mktemp)
-stack_id=''
-image_id=''
+  # Remove lockdir when the script finishes, or when it receives a signal
+  trap 'rm -rf "$lockdir"' 0    # remove directory when script finishes
+  trap "exit 2" 1 2 3 15  # terminate script when receiving signal
+
+  # Optionally create temporary files in this directory, because
+  # they will be removed automatically:
+  tmpfile=$lockdir/filelist
+else
+  echo >&2 "cannot acquire lock, giving up on $lockdir"
+  exit 0
+fi
+
+# Write out heat template
+write_heat_template "${lockdir}/template.yaml" 
 
 # Load openrc if available
 
@@ -19,156 +31,9 @@ if [ -r /root/openrc ]; then
   . /root/openrc
 fi
 
+# Load functions
 
-# Heat template for spawning a test instance.
-
-cat > $heat_template <<'EOF'
-# HOT template
-# 
-# heat stack-create --template-file checkcloud.yaml checkcloud
-#
-heat_template_version: 2013-05-23
-
-description: >
-  This template tests basic functionality of an Openstack installation's Glance,
-  Heat, Neutron and Nova services by spawning an Openstack instance that pings
-  its default gateway and logs the result to /dev/console for retrieval through
-  nova.
-  
-parameters:
-  image:
-    type: string
-    default: CirrOS 0.3.2 amd64
-    description: Name of image to use for test instance
-  flavor_testnode:
-    type: string
-    default: m1.tiny
-    description: Flavor to use for test instance
-  init_script:
-    type: string
-    description: Script to run for node initialization
-    default: |
-        #!/usr/bin/env bash
-        exec > /var/log/script_user_data.log 2>&1
-        set -x
-
-        gateway=$(ip route show | grep default | awk '{print $3}')
-
-        ping -c 10 $gateway > /dev/console
- 
-resources:
-
-  admin_net:
-    type: OS::Neutron::Net
-    properties: 
-      name:
-        str_replace:
-          template: $cloud_admin
-          params: 
-            $cloud: { get_param: 'OS::stack_name' }
-
-  admin_subnet:
-    type: OS::Neutron::Subnet
-    properties:
-      # Because contrail does not support subnet names, so forcing to be empty
-      name:
-      network_id: {get_resource: admin_net}
-      ip_version: 4
-      cidr: 10.0.80.0/24
-      allocation_pools:
-      - {start: 10.0.80.10, end: 10.0.80.150}
-
-
-  ### Test Node ###
-  #################
-
-
-  testnode:
-    type: OS::Nova::Server
-    properties:
-      name: testnode
-      image: { get_param: image }
-      flavor: { get_param: flavor_testnode }
-      networks:
-        - port: { get_resource: testnode_admin_port }
-      user_data_format: RAW  # Leave this in. Otherwise the ssh key specified in key_name won't get deployed. I'll buy you a beer if you tell me why that happens.
-      user_data:
-
-  testnode_admin_port:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_resource: admin_net }
-
-outputs:
-  testnode_id:
-    description: test instance's nova ID
-    value: { get_resource: testnode }
-EOF
-
-
-
-# Checks if J. Random API service is usable.
-
-check_service_ready()
-  {
-  service=$1
-
-  if [ -x /usr/lib/nagios/plugins/check_${service}_api ]; then
-    /usr/lib/nagios/plugins/check_${service}_api \
-      --auth_url $OS_AUTH_URL \
-      --username $OS_USERNAME \
-      --password $OS_PASSWORD \
-      --tenant admin > /dev/null 2>&1
-    return $?
-  else
-    return 2
-  fi
-  }
-
-
-# Finds the first CirrOS image available in glance and records its ID.
-
-get_cirros_image()
-  {
-    image_id=$(glance image-list | grep CirrOS | head -n 1 | awk '{print $2}')
-    if [ -n $image_id ]; then
-      return 0
-    else
-      return 1
-    fi
-  }
-
-
-# Spawns a heat stack based on the embedded template.
-
-spawn_vm()
-  {
-  stack_id=$(heat stack-create --template-file "${heat_template}" check_instance_boot -P image=$image_id | grep check_instance_boot | awk '{print $2}')
-  if [ -z $stack_id ]; then
-    return 2
-  fi
-
-  # Wait for stack status to change from CREATE_IN_PROGRESS to CREATE_{COMPLETE,FAILED}
-  watch -g heat stack-show ${stack_id} \| grep CREATE_ > /dev/null 2>&1
-
-  if heat stack-show ${stack_id} | grep CREATE_COMPLETE > /dev/null; then
-    return 0
-  else
-    return 2
-  fi
-  }
-
-
-# Removes the heat stack used for testing.
-
-cleanup()
-  {
-  rm "${heat_template}"
-
-  if [ -n "$stack_id" ]; then
-    heat stack-delete "${stack_id}" > /dev/null
-  fi
-  }
+. '/usr/lib/nagios/plugins/common/boot_instance.sh'
 
 
 # Check basic API availability
@@ -195,12 +60,15 @@ if ! get_cirros_image; then
   exit 2
 fi
 
+
+# Launch Heat stack
+
 if spawn_vm; then
   echo "OK - check_instance_boot: instance launched successfully."
-  cleanup
+  cleanup_heat_stack
   exit 0
 else
   echo 'FAIL - check_instance_boot: could not launch instance.'
-  cleanup
+  cleanup_heat_stack
   exit 2
 fi
