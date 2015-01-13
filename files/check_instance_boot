@@ -22,9 +22,6 @@ else
   exit 0
 fi
 
-# Write out heat template
-write_heat_template "${lockdir}/template.yaml" 
-
 # Load openrc if available
 
 if [ -r /root/openrc ]; then
@@ -34,6 +31,10 @@ fi
 # Load functions
 
 . '/usr/lib/nagios/plugins/common/boot_instance.sh'
+
+
+# Write out heat template
+write_heat_template "${lockdir}/template.yaml" 
 
 
 # Check basic API availability
@@ -63,7 +64,7 @@ fi
 
 # Launch Heat stack
 
-if spawn_vm; then
+if spawn_vm "${lockdir}/template.yaml"; then
   echo "OK - check_instance_boot: instance launched successfully."
   cleanup_heat_stack
   exit 0

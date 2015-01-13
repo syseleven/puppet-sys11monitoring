@@ -136,6 +136,7 @@ get_cirros_image()
 
 spawn_vm()
   {
+  heat_template=$1
   if [ -n "$image_id" ]; then
     stack_id=$(heat stack-create --template-file "${heat_template}" check_instance_boot -P image=$image_id | grep check_instance_boot | awk '{print $2}')
   else
