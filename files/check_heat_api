@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+#
+# 2015, j.grassler@syseleven.de
+#
+# Checks whether the Openstack Heat API works
+
+if [ -r /root/openrc ]; then
+    . /root/openrc
+fi
+
+if heat stack-list > /dev/null 2>&1; then
+  echo OK - Heat API available
+  exit 0
+else
+  echo FAIL - Heat API unavailable
+  exit 2
+fi
