@@ -32,9 +32,11 @@ class sys11monitoring::profile::openstack_controller() {
     require => [ Package['nagios-plugins-basic'], File['/usr/lib/nagios/plugins/common/boot_instance.sh'] ],
   }
 
-#  sensu::check { 'check_instance_boot':
-#    command => '/usr/lib/nagios/plugins/check_instance_boot',
-#    require => File['/usr/lib/nagios/plugins/check_instance_boot'],
-#  }
+  sensu::check { 'check_instance_boot':
+    command     => '/usr/lib/nagios/plugins/check_instance_boot',
+    require     => File['/usr/lib/nagios/plugins/check_instance_boot'],
+    interval    => '600',
+    occurrences => '2',
+  }
 
 }
