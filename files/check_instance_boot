@@ -11,7 +11,7 @@ if mkdir "$lockdir"; then
   #echo >&2 "successfully acquired lock"
 
   # Remove lockdir when the script finishes, or when it receives a signal
-  trap 'rm -rf "$lockdir"' 0    # remove directory when script finishes
+  trap "rm -rf $lockdir" 0    # remove directory when script finishes
   trap "exit 2" 1 2 3 15  # terminate script when receiving signal
 
   # Optionally create temporary files in this directory, because
@@ -64,12 +64,22 @@ fi
 
 # Launch Heat stack
 
+# Check if VM launches.
 if spawn_vm "${lockdir}/template.yaml"; then
+  echo "OK - instance launched successfully."
+  # Check if VM can reach its gateway.
+  if ! check_vm_pings; then
+    retval=$?
+    if ! cleanup_heat_stack; then
+      echo "WARNING - couldn't clean up test stack (still present)"
+    fi
+    exit $retval
+  fi
+
   if ! cleanup_heat_stack; then
     echo "WARNING - couldn't clean up test stack (still present)"
     exit 1
   fi
-  echo "OK - check_instance_boot: instance launched successfully."
   exit 0
 else
   echo 'CRITICAL - check_instance_boot: could not launch instance.'

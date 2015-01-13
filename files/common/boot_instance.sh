@@ -36,17 +36,6 @@ parameters:
     type: string
     default: m1.tiny
     description: Flavor to use for test instance
-  init_script:
-    type: string
-    description: Script to run for node initialization
-    default: |
-        #!/usr/bin/env bash
-        exec > /var/log/script_user_data.log 2>&1
-        set -x
-
-        gateway=$(ip route show | grep default | awk '{print $3}')
-
-        ping -c 10 $gateway > /dev/console
  
 resources:
 
@@ -84,7 +73,14 @@ resources:
       networks:
         - port: { get_resource: testnode_admin_port }
       user_data_format: RAW  # Leave this in. Otherwise the ssh key specified in key_name won't get deployed. I'll buy you a beer if you tell me why that happens.
-      user_data:
+      user_data: |
+        #!/bin/sh
+        exec > /var/log/script_user_data.log 2>&1
+        set -x
+
+        gateway=$(ip route show | grep default | awk '{print $3}')
+
+        ping -c 10 $gateway > /dev/console
 
   testnode_admin_port:
     type: OS::Neutron::Port
@@ -158,6 +154,26 @@ spawn_vm()
   }
 
 
+check_vm_pings()
+  {
+  sleep 30
+  testnode_id=$(heat output-show "$stack_id" testnode_id | sed 's/"//g')
+
+  pings=$(nova console-log "${testnode_id}" | grep '64 bytes from' | wc -l)
+
+  if [ $pings -eq 0 ]; then
+    echo 'CRITICAL - VM could not ping its gateway.'
+    return 2 # CRITICAL, since none got through
+  elif [ $pings -ne 10 ]; then
+    echo "WARNING - Not all of the VM's pings reached its gateway (${pings} got through)."
+    return 1
+  elif [ $pings -eq 10 ]; then
+    echo "OK - All of the VM's pings reached its gateway."
+    return 0
+  fi
+  }
+
+
 # Removes the heat stack used for testing.
 
 cleanup_heat_stack()
@@ -166,13 +182,13 @@ cleanup_heat_stack()
 
   if [ -n "$stack_id" ]; then
     heat stack-delete "${stack_id}" > /dev/null
-  fi
 
-  watch -g heat stack-list \| grep ${stack_id} > /dev/null 2>&1
+    watch -g heat stack-list \| grep ${stack_id} > /dev/null 2>&1
 
-  if heat stack-list | grep ${stack_id}; then
-    return 1  # Stack still present - shouldn't happen.
-  else
-    return 0
+    if heat stack-list | grep ${stack_id}; then
+      return 1  # Stack still present - shouldn't happen.
+    else
+      return 0
+    fi
   fi
   }
