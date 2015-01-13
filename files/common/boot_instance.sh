@@ -167,4 +167,12 @@ cleanup_heat_stack()
   if [ -n "$stack_id" ]; then
     heat stack-delete "${stack_id}" > /dev/null
   fi
+
+  watch -g heat stack-list \| grep ${stack_id} > /dev/null 2>&1
+
+  if heat stack-list | grep ${stack_id}; then
+    return 1  # Stack still present - shouldn't happen.
+  else
+    return 0
+  fi
   }

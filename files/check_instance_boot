@@ -44,7 +44,7 @@ service_failures=0
 for i in nova glance heat
 do
   if ! check_service_ready $i; then
-    echo "FAIL - check_instance_boot: $i API service not ready."
+    echo "CRITICAL - check_instance_boot: $i API service not ready."
     service_failures=1
   fi
 done
@@ -57,7 +57,7 @@ fi
 # Check glance image availability
 
 if ! get_cirros_image; then
-      echo 'FAIL - No CirrOS image available from glance.'
+      echo 'CRITICAL - No CirrOS image available from glance.'
   exit 2
 fi
 
@@ -65,11 +65,14 @@ fi
 # Launch Heat stack
 
 if spawn_vm "${lockdir}/template.yaml"; then
+  if ! cleanup_heat_stack; then
+    echo "WARNING - couldn't clean up test stack (still present)"
+    exit 1
+  fi
   echo "OK - check_instance_boot: instance launched successfully."
-  cleanup_heat_stack
   exit 0
 else
-  echo 'FAIL - check_instance_boot: could not launch instance.'
+  echo 'CRITICAL - check_instance_boot: could not launch instance.'
   cleanup_heat_stack
   exit 2
 fi
