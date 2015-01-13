@@ -32,11 +32,19 @@ class sys11monitoring::profile::openstack_controller() {
     require => [ Package['nagios-plugins-basic'], File['/usr/lib/nagios/plugins/common/boot_instance.sh'] ],
   }
 
+  file_line { 'sudo_check_instance_boot':
+    path    => '/etc/sudoers',
+    line    => 'sensu ALL=(ALL) NOPASSWD: /usr/lib/nagios/plugins/check_instance_boot',
+    require => File['/usr/lib/nagios/plugins/check_instance_boot'],
+  }
+
+
   sensu::check { 'check_instance_boot':
-    command     => '/usr/lib/nagios/plugins/check_instance_boot',
-    require     => File['/usr/lib/nagios/plugins/check_instance_boot'],
+    command     => 'sudo /usr/lib/nagios/plugins/check_instance_boot',
+    require     => [ File['/usr/lib/nagios/plugins/check_instance_boot'], File_line['sudo_check_instance_boot' ] ],
     interval    => '600',
     occurrences => '2',
+    timeout     => '120',
   }
 
 }
