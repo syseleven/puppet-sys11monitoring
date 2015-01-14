@@ -4,11 +4,45 @@
 #
 # Checks whether the Openstack Heat API works
 
-if [ -r /root/openrc ]; then
-    . /root/openrc
-fi
+auth_url=''
+username=''
+password=''
+tenant=''
 
-if heat stack-list > /dev/null 2>&1; then
+while [[ $1 ]]; do
+  case $1 in
+  '--auth_url')
+      auth_url=$2
+      shift 2
+      ;;
+  '--username')
+      username=$2
+      shift 2
+      ;;
+  '--password')
+      password=$2
+      shift 2
+      ;;
+  '--tenant')
+      tenant=$2
+      shift 2
+      ;;
+    *)
+      args+=("$1")
+      shift
+      ;;
+  esac
+done
+
+for i in "$auth_url" "$username" "$password" "$tenant"
+do
+  if [ -z "$i" ]; then
+    echo "Couldn't check heat API: missing credentials."
+    exit 3
+  fi
+done
+
+if heat --os-auth-url "$auth_url" --os-username "$username" --os-password "$password" --os-tenant-name "$tenant" stack-list > /dev/null 2>&1; then
   echo OK - Heat API available
   exit 0
 else
