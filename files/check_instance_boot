@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+#
+# 2015, j.grassler@syseleven.de
+#
+# Checks whether an openstack instance can be spawned
+
+# Directory for all state related to sensu checks
+
+lockdir=/tmp/check_instance_boot.lock
+if mkdir "$lockdir"; then
+  #echo >&2 "successfully acquired lock"
+
+  # Remove lockdir when the script finishes, or when it receives a signal
+  trap "rm -rf $lockdir" 0    # remove directory when script finishes
+  trap "exit 2" 1 2 3 15  # terminate script when receiving signal
+
+  # Optionally create temporary files in this directory, because
+  # they will be removed automatically:
+  tmpfile=$lockdir/filelist
+else
+  echo >&2 "cannot acquire lock, giving up on $lockdir"
+  exit 0
+fi
+
+# Load openrc if available
+
+if [ -r /root/openrc ]; then
+  . /root/openrc
+fi
+
+# Load functions
+
+. '/usr/lib/nagios/plugins/common/boot_instance.sh'
+
+
+# Write out heat template
+write_heat_template "${lockdir}/template.yaml" 
+
+
+# Check basic API availability
+
+service_failures=0
+
+for i in nova glance heat
+do
+  if ! check_service_ready $i; then
+    echo "CRITICAL - check_instance_boot: $i API service not ready."
+    service_failures=1
+  fi
+done
+
+if [ $service_failures -ne 0 ]; then
+  exit 2
+fi
+
+
+# Check glance image availability
+
+if ! get_cirros_image; then
+      echo 'CRITICAL - No CirrOS image available from glance.'
+  exit 2
+fi
+
+
+# Launch Heat stack
+
+# Check if VM launches.
+if spawn_vm "${lockdir}/template.yaml"; then
+  echo "OK - instance launched successfully."
+  # Check if VM can reach its gateway.
+  if ! check_vm_pings; then
+    retval=$?
+    if ! cleanup_heat_stack; then
+      echo "WARNING - couldn't clean up test stack (still present)"
+    fi
+    exit $retval
+  fi
+
+  if ! cleanup_heat_stack; then
+    echo "WARNING - couldn't clean up test stack (still present)"
+    exit 1
+  fi
+  exit 0
+else
+  echo 'CRITICAL - check_instance_boot: could not launch instance.'
+  cleanup_heat_stack
+  exit 2
+fi

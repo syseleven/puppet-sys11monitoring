@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+#
+# 2015, j.grassler@syseleven.de
+#
+# Checks whether the Openstack Heat API works
+
+auth_url=''
+username=''
+password=''
+tenant=''
+
+while [[ $1 ]]; do
+  case $1 in
+  '--auth_url')
+      auth_url=$2
+      shift 2
+      ;;
+  '--username')
+      username=$2
+      shift 2
+      ;;
+  '--password')
+      password=$2
+      shift 2
+      ;;
+  '--tenant')
+      tenant=$2
+      shift 2
+      ;;
+    *)
+      args+=("$1")
+      shift
+      ;;
+  esac
+done
+
+for i in "$auth_url" "$username" "$password" "$tenant"
+do
+  if [ -z "$i" ]; then
+    echo "Couldn't check heat API: missing credentials."
+    exit 3
+  fi
+done
+
+if heat --os-auth-url "$auth_url" --os-username "$username" --os-password "$password" --os-tenant-name "$tenant" stack-list > /dev/null 2>&1; then
+  echo OK - Heat API available
+  exit 0
+else
+  echo FAIL - Heat API unavailable
+  exit 2
+fi
