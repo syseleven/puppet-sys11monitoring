@@ -30,7 +30,7 @@ fi
 
 # Load functions
 
-. '/usr/lib/nagios/plugins/common/boot_instance.sh'
+. '/usr/lib/nagios/plugins/check_instance.d/boot_instance.sh'
 
 
 # Write out heat template

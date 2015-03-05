@@ -11,7 +11,7 @@ class sys11monitoring::profile::openstack_controller(
     'sensu': {
       # Directory for common functions used by multiple checks.
 
-      file{'/usr/lib/nagios/plugins/common/':
+      file{'/usr/lib/nagios/plugins/check_instance.d/':
         ensure  => directory,
         mode    => '0555',
         require => Package['nagios-plugins-basic'],
@@ -20,11 +20,11 @@ class sys11monitoring::profile::openstack_controller(
 
       ### Common functions ###
 
-      file{'/usr/lib/nagios/plugins/common/boot_instance.sh':
+      file{'/usr/lib/nagios/plugins/check_instance.d/boot_instance.sh':
         ensure  => file,
         mode    => '0444',
-        source  => "puppet:///modules/$module_name/common/boot_instance.sh",
-        require => File['/usr/lib/nagios/plugins/common/'],
+        source  => "puppet:///modules/$module_name/check_instance.d/boot_instance.sh",
+        require => File['/usr/lib/nagios/plugins/check_instance.d/'],
       }
 
 
@@ -61,7 +61,7 @@ class sys11monitoring::profile::openstack_controller(
         ensure  => file,
         mode    => '0555',
         source  => "puppet:///modules/$module_name/check_instance_boot",
-        require => [ Package['nagios-plugins-basic'], File['/usr/lib/nagios/plugins/common/boot_instance.sh'] ],
+        require => [ Package['nagios-plugins-basic'], File['/usr/lib/nagios/plugins/check_instance.d/boot_instance.sh'] ],
       }
 
       file_line { 'sudo_check_instance_boot':
