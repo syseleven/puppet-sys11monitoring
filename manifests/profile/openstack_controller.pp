@@ -13,20 +13,33 @@ class sys11monitoring::profile::openstack_controller(
 
       file{'/usr/lib/nagios/plugins/check_instance.d/':
         ensure  => directory,
+        recurse => true,
+        purge   => true,
         mode    => '0555',
+        ignore  => '.*.swp',
+        source  => "puppet:///modules/$module_name/check_instance.d/",
         require => Package['nagios-plugins-basic'],
       }
 
 
       ### Common functions ###
 
-      file{'/usr/lib/nagios/plugins/check_instance.d/boot_instance.sh':
-        ensure  => file,
-        mode    => '0444',
-        source  => "puppet:///modules/$module_name/check_instance.d/boot_instance.sh",
-        require => File['/usr/lib/nagios/plugins/check_instance.d/'],
-      }
-
+      #      file{'/usr/lib/nagios/plugins/check_instance.d/':
+      #  ensure  => file,
+      #  mode    => '0444',
+      #  source  => "puppet:///modules/$module_name/check_instance.d/gein.sh",
+      #  require => File['/usr/lib/nagios/plugins/check_instance.d/'],
+      #}
+      #
+      #
+      #
+      #file{'/usr/lib/nagios/plugins/check_instance.d/boot_instance.sh':
+      #  ensure  => file,
+      #  mode    => '0444',
+      #  source  => "puppet:///modules/$module_name/check_instance.d/boot_instance.sh",
+      #  require => File['/usr/lib/nagios/plugins/check_instance.d/'],
+      #}
+      #
 
 
       ### Individual checks ###
@@ -61,7 +74,7 @@ class sys11monitoring::profile::openstack_controller(
         ensure  => file,
         mode    => '0555',
         source  => "puppet:///modules/$module_name/check_instance_boot",
-        require => [ Package['nagios-plugins-basic'], File['/usr/lib/nagios/plugins/check_instance.d/boot_instance.sh'] ],
+        require => [ Package['nagios-plugins-basic'], File['/usr/lib/nagios/plugins/check_instance.d/'] ],
       }
 
       file_line { 'sudo_check_instance_boot':

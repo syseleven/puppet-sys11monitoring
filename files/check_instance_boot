@@ -30,6 +30,7 @@ fi
 
 # Load functions
 
+. '/usr/lib/nagios/plugins/check_instance.d/generic.sh'
 . '/usr/lib/nagios/plugins/check_instance.d/boot_instance.sh'
 
 

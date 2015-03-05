@@ -1,9 +1,4 @@
-#!/usr/bin/env bash
-#
 # 2015, j.grassler@syseleven.de
-#
-# Functions used by checks that spawn openstack instances.
-
 
 # Global state used across functions.
 
@@ -12,8 +7,7 @@ image_id=''              # ID of the Glance image to use.
 
 # Write out Heat template used for spawning a test instance.
 
-write_heat_template()
-{
+write_heat_template() {
 cat > $1 <<'EOF'
 # HOT template
 # 
@@ -96,66 +90,8 @@ EOF
 
 
 
-# Checks if J. Random API service is usable.
 
-check_service_ready()
-  {
-  service=$1
-
-  if [ -x /usr/lib/nagios/plugins/check_${service}_api ]; then
-    /usr/lib/nagios/plugins/check_${service}_api \
-      --auth_url $OS_AUTH_URL \
-      --username $OS_USERNAME \
-      --password $OS_PASSWORD \
-      --tenant admin > /dev/null 2>&1
-    return $?
-  else
-    return 2
-  fi
-  }
-
-
-# Finds the first CirrOS image available in glance and records its ID.
-
-get_cirros_image()
-  {
-    image_id=$(glance image-list | grep CirrOS | head -n 1 | awk '{print $2}')
-    if [ -n $image_id ]; then
-      return 0
-    else
-      return 1
-    fi
-  }
-
-
-# Spawns a heat stack based on the embedded template.
-
-spawn_vm()
-  {
-  heat_template=$1
-  if [ -n "$image_id" ]; then
-    stack_id=$(heat stack-create --template-file "${heat_template}" check_instance_boot -P image=$image_id | grep check_instance_boot | awk '{print $2}')
-  else
-    stack_id=$(heat stack-create --template-file "${heat_template}" check_instance_boot | grep check_instance_boot | awk '{print $2}')
-  fi
-
-  if [ -z $stack_id ]; then
-    return 2
-  fi
-
-  # Wait for stack status to change from CREATE_IN_PROGRESS to CREATE_{COMPLETE,FAILED}
-  watch -g heat stack-show ${stack_id} \| grep CREATE_ > /dev/null 2>&1
-
-  if heat stack-show ${stack_id} | grep CREATE_COMPLETE > /dev/null; then
-    return 0
-  else
-    return 2
-  fi
-  }
-
-
-check_vm_pings()
-  {
+check_vm_pings() {
   sleep 30
   testnode_id=$(heat output-show "$stack_id" testnode_id | sed 's/"//g')
 
@@ -171,13 +107,12 @@ check_vm_pings()
     echo "OK - All of the VM's pings reached its gateway."
     return 0
   fi
-  }
+}
 
 
 # Removes the heat stack used for testing.
 
-cleanup_heat_stack()
-  {
+cleanup_heat_stack() {
   rm "${heat_template}"
 
   if [ -n "$stack_id" ]; then
@@ -191,4 +126,4 @@ cleanup_heat_stack()
       return 0
     fi
   fi
-  }
+}
