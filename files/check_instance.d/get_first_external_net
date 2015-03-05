@@ -1,0 +1,95 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# 2015, s.andres@syseleven.de
+
+import os
+
+from keystoneclient.v2_0 import client as ksclient
+from neutronclient.neutron import client as neutron_client
+
+from copy import deepcopy
+
+
+
+keystone_kwargs = {
+        'username': os.environ['OS_USERNAME'],
+        'password': os.environ['OS_PASSWORD'],
+        'tenant_name': os.environ['OS_TENANT_NAME'],
+        'auth_url': os.environ['OS_AUTH_URL']
+}
+
+def get_ksclient(**kwargs):
+    """Get an endpoint and auth token from Keystone.
+
+    :param username: name of user
+    :param password: user's password
+    :param tenant_id: unique identifier of tenant
+    :param tenant_name: name of tenant
+    :param auth_url: endpoint to authenticate against
+    :param token: token to use instead of username/password
+    """
+    kc_args = {'auth_url': kwargs.get('auth_url'),
+               'insecure': kwargs.get('insecure'),
+               'cacert': kwargs.get('cacert')}
+
+    if kwargs.get('tenant_id'):
+        kc_args['tenant_id'] = kwargs.get('tenant_id')
+    else:
+        kc_args['tenant_name'] = kwargs.get('tenant_name')
+
+    if kwargs.get('token'):
+        kc_args['token'] = kwargs.get('token')
+    else:
+        kc_args['username'] = kwargs.get('username')
+        kc_args['password'] = kwargs.get('password')
+
+    return ksclient.Client(**kc_args)
+
+def get_endpoint(client, **kwargs):
+    """Get an endpoint using the provided keystone client."""
+    if kwargs.get('region_name'):
+        return client.service_catalog.url_for(
+            service_type=kwargs.get('service_type') or 'orchestration',
+            attr='region',
+            filter_value=kwargs.get('region_name'),
+            endpoint_type=kwargs.get('endpoint_type') or 'publicURL')
+    return client.service_catalog.url_for(
+        service_type=kwargs.get('service_type') or 'orchestration',
+        endpoint_type=kwargs.get('endpoint_type') or 'publicURL')
+
+def dict_merge(a, b):
+    '''recursively merges dict's. not just simple a['key'] = b['key'], if
+    both a and bhave a key who's value is a dict then dict_merge is called
+    on both values and the result stored in the returned dictionary.'''
+
+    if not isinstance(b, dict):
+        return b
+    result = deepcopy(a)
+    for k, v in b.iteritems():
+        if k in result and isinstance(result[k], dict):
+                result[k] = dict_merge(result[k], v)
+        else:
+            result[k] = deepcopy(v)
+    return result
+
+def get_neutron_client(keystone_env = {}):
+    _keystone_kwargs = deepcopy(keystone_kwargs)
+    ksclient = get_ksclient(**_keystone_kwargs)
+    _keystone_kwargs['service_type'] = 'network'
+    _keystone_kwargs = dict_merge(_keystone_kwargs, keystone_env)
+    endpoint = get_endpoint(ksclient, **_keystone_kwargs)
+    client = neutron_client.Client('2.0', endpoint_url=endpoint, token=ksclient.auth_ref['token']['id'], **_keystone_kwargs)
+
+    return client
+
+
+def main():
+    """Returns first external network"""
+    neutronclient = get_neutron_client()
+    for net in neutronclient.list_networks()['networks']:
+        if net['router:external']:
+            print(net['id'])
+
+if __name__ == '__main__':
+    main()

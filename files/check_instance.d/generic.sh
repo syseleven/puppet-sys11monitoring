@@ -36,10 +36,11 @@ get_cirros_image() {
 
 spawn_vm() {
   heat_template=$1
+  stack_name=$2
   if [ -n "$image_id" ]; then
-    stack_id=$(heat stack-create --template-file "${heat_template}" check_instance_boot -P image=$image_id | grep check_instance_boot | awk '{print $2}')
+    stack_id=$(heat stack-create --template-file "${heat_template}" $stack_name -P image=$image_id | grep $stack_name | awk '{print $2}')
   else
-    stack_id=$(heat stack-create --template-file "${heat_template}" check_instance_boot | grep check_instance_boot | awk '{print $2}')
+    stack_id=$(heat stack-create --template-file "${heat_template}" $stack_name | grep $stack_name | awk '{print $2}')
   fi
 
   if [ -z $stack_id ]; then
@@ -56,4 +57,20 @@ spawn_vm() {
   fi
 }
 
+# Removes the heat stack used for testing.
 
+cleanup_heat_stack() {
+  rm "${heat_template}"
+
+  if [ -n "$stack_id" ]; then
+    heat stack-delete "${stack_id}" > /dev/null
+
+    watch -g heat stack-list \| grep ${stack_id} > /dev/null 2>&1
+
+    if heat stack-list | grep ${stack_id}; then
+      return 1  # Stack still present - shouldn't happen.
+    else
+      return 0
+    fi
+  fi
+}
