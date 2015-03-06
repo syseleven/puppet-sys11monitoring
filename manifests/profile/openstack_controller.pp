@@ -7,26 +7,43 @@ class sys11monitoring::profile::openstack_controller(
   $monitoring       = hiera('sys11stack::monitoring', false),
 ) {
 
+  define add_check_instance() {
+    file { "/usr/lib/nagios/plugins/$title":
+      ensure  => file,
+      mode    => '0555',
+      source  => "puppet:///modules/$module_name/$title",
+      require => [ Package['nagios-plugins-basic'], File['/usr/lib/nagios/plugins/check_instance.d/'] ],
+    }
+
+    file_line { "sudo_$title":
+      path    => '/etc/sudoers',
+      line    => "sensu ALL=(ALL) NOPASSWD: /usr/lib/nagios/plugins/$title",
+      require => File['/usr/lib/nagios/plugins/check_instance_boot'],
+    }
+
+
+    sensu::check { $title:
+      command     => "sudo /usr/lib/nagios/plugins/$title",
+      require     => [ File['/usr/lib/nagios/plugins/check_instance_boot'], File_line['sudo_check_instance_boot' ] ],
+      interval    => '600',
+      occurrences => '2',
+      timeout     => '120',
+    }
+  }
+
   case $monitoring {
     'sensu': {
       # Directory for common functions used by multiple checks.
 
-      file{'/usr/lib/nagios/plugins/common/':
+      file{'/usr/lib/nagios/plugins/check_instance.d/':
         ensure  => directory,
+        recurse => true,
+        purge   => true,
         mode    => '0555',
+        ignore  => '.*.swp',
+        source  => "puppet:///modules/$module_name/check_instance.d/",
         require => Package['nagios-plugins-basic'],
       }
-
-
-      ### Common functions ###
-
-      file{'/usr/lib/nagios/plugins/common/boot_instance.sh':
-        ensure  => file,
-        mode    => '0444',
-        source  => "puppet:///modules/$module_name/common/boot_instance.sh",
-        require => File['/usr/lib/nagios/plugins/common/'],
-      }
-
 
 
       ### Individual checks ###
@@ -57,27 +74,7 @@ class sys11monitoring::profile::openstack_controller(
 
       # Check for working instance boot (Indicates working Nova, Glance and Heat)
 
-      file {'/usr/lib/nagios/plugins/check_instance_boot':
-        ensure  => file,
-        mode    => '0555',
-        source  => "puppet:///modules/$module_name/check_instance_boot",
-        require => [ Package['nagios-plugins-basic'], File['/usr/lib/nagios/plugins/common/boot_instance.sh'] ],
-      }
-
-      file_line { 'sudo_check_instance_boot':
-        path    => '/etc/sudoers',
-        line    => 'sensu ALL=(ALL) NOPASSWD: /usr/lib/nagios/plugins/check_instance_boot',
-        require => File['/usr/lib/nagios/plugins/check_instance_boot'],
-      }
-
-
-      sensu::check { 'check_instance_boot':
-        command     => 'sudo /usr/lib/nagios/plugins/check_instance_boot',
-        require     => [ File['/usr/lib/nagios/plugins/check_instance_boot'], File_line['sudo_check_instance_boot' ] ],
-        interval    => '600',
-        occurrences => '2',
-        timeout     => '120',
-      }
+      add_check_instance { ['check_instance_boot', 'check_instance_snat']: }
     }
     false: { }
     default: { fail("Only sensu monitoring supported ('$monitoring' given)") }
