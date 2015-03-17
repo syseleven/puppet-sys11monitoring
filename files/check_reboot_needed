@@ -8,5 +8,6 @@ if [[ -f /var/run/reboot-required ]]; then
   echo "$pkgs" | sort -u
   exit 1
 else
+  echo 'OK - no reboot required'
   exit 0
 fi
