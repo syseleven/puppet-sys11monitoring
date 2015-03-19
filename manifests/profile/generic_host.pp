@@ -1,4 +1,6 @@
-class sys11monitoring::profile::generic_host() {
+class sys11monitoring::profile::generic_host(
+  $check_reboot_needed = false,
+) {
   # iso9660 is /config metadata filesystem, it always is 100%
   sensu::check { 'diskspace':
     command => '/opt/sensu-community-plugins/plugins/system/check-disk.rb -x iso9660',
@@ -42,6 +44,19 @@ class sys11monitoring::profile::generic_host() {
     sensu::check { 'bonding':
       command => '/usr/lib/nagios/plugins/check_linux_bonding',
       require => File['/usr/lib/nagios/plugins/check_linux_bonding'],
+    }
+  }
+
+  if $check_reboot_needed {
+    file {'/usr/lib/nagios/plugins/check_reboot_needed':
+      ensure => file,
+      mode   => '0555',
+      source => "puppet:///modules/$module_name/check_reboot_needed",
+    }
+
+    sensu::check { 'reboot_needed':
+      command => '/usr/lib/nagios/plugins/check_reboot_needed',
+      require => File['/usr/lib/nagios/plugins/check_reboot_needed'],
     }
   }
 }

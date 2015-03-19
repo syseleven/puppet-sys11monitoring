@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# 2015, s.andres@syseleven.de
+
+if [[ -f /var/run/reboot-required ]]; then
+  [[ -f /var/run/reboot-required.pkgs ]] && pkgs=$(</var/run/reboot-required.pkgs)
+  lastupdate=$(date +'%Y-%m-%d %H:%M' -d @$(stat -c %Y /var/run/reboot-required))
+  echo "WARNING - reboot needed because of the following packages (at least since $lastupdate):"
+  echo "$pkgs" | sort -u
+  exit 1
+else
+  echo 'OK - no reboot required'
+  exit 0
+fi
