@@ -18,8 +18,8 @@ if mkdir "$lockdir"; then
   # they will be removed automatically:
   tmpfile=$lockdir/filelist
 else
-  echo >&2 "cannot acquire lock, giving up on $lockdir"
-  exit 0
+  echo >&2 "WARNING - cannot acquire lock, giving up on $lockdir"
+  exit 1
 fi
 
 # Load openrc if available
