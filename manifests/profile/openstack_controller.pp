@@ -22,11 +22,6 @@ class sys11monitoring::profile::openstack_controller(
       require => File['/usr/lib/nagios/plugins/check_instance_boot'],
     }
 
-    sensu::check { $check_title:
-      ensure  => absent,
-      command => '/dev/null',
-    }
-
     sensu::check { $title:
       command     => "sudo /usr/lib/nagios/plugins/$check_title",
       require     => [ File['/usr/lib/nagios/plugins/check_instance_boot'], File_line['sudo_check_instance_boot' ] ],
@@ -66,12 +61,6 @@ class sys11monitoring::profile::openstack_controller(
         path    => '/etc/sudoers',
         line    => 'sensu ALL=(ALL) NOPASSWD: /usr/lib/nagios/plugins/check_heat_api',
         require => File['/usr/lib/nagios/plugins/check_heat_api'],
-      }
-
-      # there is no purge on type sensu_check
-      sensu::check { 'check_heat_api':
-        ensure  => absent,
-        command => '/dev/null',
       }
 
       sensu::check { 'heat_api':
