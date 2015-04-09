@@ -8,22 +8,22 @@ class sys11monitoring::profile::openstack_controller(
 ) {
 
   define add_check_instance() {
-    file { "/usr/lib/nagios/plugins/$title":
+    $check_title = "check_$title"
+    file { "/usr/lib/nagios/plugins/$check_title":
       ensure  => file,
       mode    => '0555',
-      source  => "puppet:///modules/$module_name/$title",
+      source  => "puppet:///modules/$module_name/$check_title",
       require => [ Package['nagios-plugins-basic'], File['/usr/lib/nagios/plugins/check_instance.d/'] ],
     }
 
-    file_line { "sudo_$title":
+    file_line { "sudo_$check_title":
       path    => '/etc/sudoers',
-      line    => "sensu ALL=(ALL) NOPASSWD: /usr/lib/nagios/plugins/$title",
+      line    => "sensu ALL=(ALL) NOPASSWD: /usr/lib/nagios/plugins/$check_title",
       require => File['/usr/lib/nagios/plugins/check_instance_boot'],
     }
 
-
     sensu::check { $title:
-      command     => "sudo /usr/lib/nagios/plugins/$title",
+      command     => "sudo /usr/lib/nagios/plugins/$check_title",
       require     => [ File['/usr/lib/nagios/plugins/check_instance_boot'], File_line['sudo_check_instance_boot' ] ],
       interval    => '600',
       occurrences => '2',
@@ -63,7 +63,7 @@ class sys11monitoring::profile::openstack_controller(
         require => File['/usr/lib/nagios/plugins/check_heat_api'],
       }
 
-      sensu::check { 'check_heat_api':
+      sensu::check { 'heat_api':
         command     => "PATH=\$PATH:/usr/lib/nagios/plugins/ check_nova_api --auth_url $auth_url --username $admin_user --password $admin_password --tenant $admin_tenant",
         require     => [ File['/usr/lib/nagios/plugins/check_heat_api'], File_line['sudo_check_heat_api' ] ],
         interval    => '120',
@@ -74,7 +74,7 @@ class sys11monitoring::profile::openstack_controller(
 
       # Check for working instance boot (Indicates working Nova, Glance and Heat)
 
-      add_check_instance { ['check_instance_boot', 'check_instance_snat']: }
+      add_check_instance { ['instance_boot', 'instance_snat']: }
     }
     false: { }
     default: { fail("Only sensu monitoring supported ('$monitoring' given)") }
