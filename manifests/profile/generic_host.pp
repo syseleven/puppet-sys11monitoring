@@ -55,8 +55,9 @@ class sys11monitoring::profile::generic_host(
     }
 
     sensu::check { 'reboot_needed':
-      command => '/usr/lib/nagios/plugins/check_reboot_needed',
-      require => File['/usr/lib/nagios/plugins/check_reboot_needed'],
+      command  => '/usr/lib/nagios/plugins/check_reboot_needed',
+      interval => 86400,
+      require  => File['/usr/lib/nagios/plugins/check_reboot_needed'],
     }
   }
 }
