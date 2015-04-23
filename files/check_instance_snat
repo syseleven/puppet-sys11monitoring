@@ -74,8 +74,9 @@ fi
 if spawn_vm "${lockdir}/template.yaml" check_instance_snat; then
   echo "OK - instance launched successfully."
   # Check if VM can reach its gateway.
-  if ! check_vm_pings; then
-    retval=$?
+  check_vm_pings
+  retval=$?
+  if ((retval)); then
     if ! cleanup_heat_stack; then
       echo "WARNING - couldn't clean up test stack (still present)"
     fi
