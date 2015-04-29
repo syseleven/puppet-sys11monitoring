@@ -125,7 +125,7 @@ EOF
 
 
 check_vm_pings() {
-  sleep 45
+  sleep 60
   testnode_id=$(heat output-show "$stack_id" testnode_id | sed 's/"//g')
 
   pings=$(nova console-log "${testnode_id}" | grep '64 bytes from' | wc -l)
