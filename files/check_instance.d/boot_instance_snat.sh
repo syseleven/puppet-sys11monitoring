@@ -91,8 +91,7 @@ resources:
         exec > /var/log/script_user_data.log 2>&1
         set -x
 
-
-
+        sleep 30
         ping -c 10 $snat_dest > /dev/console
 
   testnode_admin_port:
