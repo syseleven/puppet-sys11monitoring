@@ -101,7 +101,7 @@ check_vm_pings() {
     echo 'CRITICAL - VM could not ping its gateway.'
     return 2 # CRITICAL, since none got through
   elif [ $pings -ne 10 ]; then
-    echo "WARNING - Not all of the VM's pings reached its gateway (${pings} got through)."
+    echo "WARNING - Not all of the VM's pings reached its gateway (${pings}/10 got through)."
     return 1
   elif [ $pings -eq 10 ]; then
     echo "OK - All of the VM's pings reached its gateway."
