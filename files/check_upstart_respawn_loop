@@ -1,0 +1,46 @@
+#!/usr/bin/env python
+import six
+import time
+import requests
+import argparse
+
+
+def options():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-u', '--url', default='http://127.0.0.1:18000/',
+                        help='Url to query for respawns')
+    parser.add_argument('-t', '--time', default=60, type=int,
+                        help='Seconds since last respawn')
+    return parser
+
+
+def main():
+    opts = options().parse_args()
+    try:
+        res = requests.get(opts.url)
+    except Exception as e:
+        print('CRITICAL: Unable to reach upstartwatch on %s' % opts.url)
+        print(e)
+        exit(2)
+    if res.status_code != 200:
+        print('UNKNOWN: Unable to query respawn counts')
+        exit(3)
+
+    try:
+        body = res.json()
+    except:
+        print('UNKNOWN: Unable to parse json')
+        exit(3)
+
+    exit_code = 0
+    for k,v in six.iteritems(body):
+        if v['respawn_count'] > 1 and v['last_respawn'] > time.time() - opts.time:
+            print('CRITICAL: Respawn loop of %s detected' % k)
+            exit_code = 2
+
+    if exit_code == 0:
+        print('OK: No repawn loop detected')
+    exit(exit_code)
+
+if __name__ == '__main__':
+    main()
