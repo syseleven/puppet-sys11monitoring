@@ -61,24 +61,28 @@ class sys11monitoring::profile::generic_host(
     }
   }
 
-  include apt
+  if versioncmp($::operatingsystemmajrelease, '14.04') != 1 {
+    # we only need this on ubuntu <= 14.04, since newer versions,
+    # systemd replaced upstart.
+    include apt
 
-  apt::ppa { 'ppa:syseleven-platform/upstartwatch': }
+    apt::ppa { 'ppa:syseleven-platform/upstartwatch': }
 
-  package { 'python3-upstartwatch':
-    ensure  => latest,
-    require => Apt::Ppa['ppa:syseleven-platform/upstartwatch'],
-  }
+    package { 'python3-upstartwatch':
+      ensure  => latest,
+      require => Apt::Ppa['ppa:syseleven-platform/upstartwatch'],
+    }
 
-  file {'/usr/lib/nagios/plugins/check_upstart_respawn_loop':
-    ensure  => file,
-    mode    => '0555',
-    source  => "puppet:///modules/$module_name/check_upstart_respawn_loop",
-    require => [Package['nagios-plugins-basic'], Package['python3-upstartwatch']],
-  }
+    file {'/usr/lib/nagios/plugins/check_upstart_respawn_loop':
+      ensure  => file,
+      mode    => '0555',
+      source  => "puppet:///modules/$module_name/check_upstart_respawn_loop",
+      require => [Package['nagios-plugins-basic'], Package['python3-upstartwatch']],
+    }
 
-  sensu::check { 'upstart_respawn_loop':
-    command => '/usr/lib/nagios/plugins/check_upstart_respawn_loop',
-    require => File['/usr/lib/nagios/plugins/check_upstart_respawn_loop'],
+    sensu::check { 'upstart_respawn_loop':
+      command => '/usr/lib/nagios/plugins/check_upstart_respawn_loop',
+      require => File['/usr/lib/nagios/plugins/check_upstart_respawn_loop'],
+    }
   }
 }
