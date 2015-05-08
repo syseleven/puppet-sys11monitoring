@@ -81,8 +81,11 @@ class sys11monitoring::profile::generic_host(
     }
 
     sensu::check { 'upstart_respawn_loop':
-      command => '/usr/lib/nagios/plugins/check_upstart_respawn_loop',
-      require => File['/usr/lib/nagios/plugins/check_upstart_respawn_loop'],
+      command      => '/usr/lib/nagios/plugins/check_upstart_respawn_loop',
+      custom       => {
+        'volatile' => true,
+      },
+      require      => File['/usr/lib/nagios/plugins/check_upstart_respawn_loop'],
     }
   }
 }
