@@ -57,6 +57,12 @@ spawn_vm() {
   fi
 }
 
+show_physical_host_of_vm() {
+  heat_resource=$(heat resource-show ${stack_id} testnode | awk '/physical_resource_id/ { print $4 }')
+  physical_host=$(nova show ${heat_resource} | awk '/hypervisor_hostname/ { print $4 }')
+  echo "Physical host for VM is ${physical_host}."
+}
+
 # Removes the heat stack used for testing.
 
 cleanup_heat_stack() {
