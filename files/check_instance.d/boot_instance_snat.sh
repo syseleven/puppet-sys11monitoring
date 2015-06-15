@@ -138,7 +138,6 @@ check_vm_pings() {
     return 1
   elif [ $pings -eq 10 ]; then
     echo "OK - All of the VM's pings reached $snat_dest."
-
     return 0
   fi
 }
