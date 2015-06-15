@@ -128,16 +128,19 @@ check_vm_pings() {
   testnode_id=$(heat output-show "$stack_id" testnode_id | sed 's/"//g')
 
   pings=$(nova console-log "${testnode_id}" | grep '64 bytes from' | wc -l)
+  heat_resource=$(heat resource-show ${stack_id} testnode | awk '/physical_resource_id/ { print $4 }')
+  physical_host=$(nova show ${heat_resource} | awk '/hypervisor_hostname/ { print $4 }')
   #nova console-log "${testnode_id}"
 
   if [ $pings -eq 0 ]; then
-    echo "CRITICAL - VM could not ping $snat_dest."
+    echo "CRITICAL - VM could not ping $snat_dest (physical host was $physical_host)."
     return 2 # CRITICAL, since none got through
   elif [ $pings -ne 10 ]; then
-    echo "WARNING - Not all of the VM's pings reached $snat_dest (${pings}/10 got through)."
+    echo "WARNING - Not all of the VM's pings reached $snat_dest (${pings}/10 got through, physical host was $physical_host)."
     return 1
   elif [ $pings -eq 10 ]; then
-    echo "OK - All of the VM's pings reached $snat_dest."
+    echo "OK - All of the VM's pings reached $snat_dest (physical host was $physical_host)."
+
     return 0
   fi
 }
