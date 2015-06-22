@@ -37,6 +37,32 @@ get_cirros_image() {
 spawn_vm() {
   heat_template=$1
   stack_name=$2
+  local try=0
+
+  # try to delete old stack 10 times
+  # (should not exist, but does, because heat stack-delete
+  # may fail at cleanup because of unstable heat api)
+  while sleep 1; do
+    ((try++))
+    if ((try == 10)); then
+      echo "Could not delete old stack 10 times"
+      break
+    fi
+    output=$(heat stack-list|grep "$stack_name")
+    if echo "$output" | grep -q DELETE_IN_PROGRESS; then
+      continue
+    else
+      heat stack-delete "$stack_name" >/dev/null 2>&1
+    fi
+
+    # break out of loop when no stack can be found (==is deleted)
+    echo $output | grep -q "$stack_name" || break
+
+    if echo "$output" | grep -q FAIL; then
+      heat stack-delete "$stack_name" >/dev/null 2>&1
+    fi
+  done
+
   if [ -n "$image_id" ]; then
     stack_id=$(heat stack-create --template-file "${heat_template}" $stack_name -P image=$image_id | grep $stack_name | awk '{print $2}')
   else
