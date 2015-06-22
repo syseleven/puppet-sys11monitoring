@@ -76,6 +76,12 @@ class sys11monitoring::profile::generic_host(
       require => Apt::Ppa['ppa:syseleven-platform/upstartwatch'],
     }
 
+    service { 'upstartwatch':
+      ensure  => running,
+      enable  => true,
+      require => Package['python3-upstartwatch'],
+    }
+
     file {'/usr/lib/nagios/plugins/check_upstart_respawn_loop':
       ensure  => file,
       mode    => '0555',
