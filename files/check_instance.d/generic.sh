@@ -45,7 +45,7 @@ spawn_vm() {
   while sleep 1; do
     ((try++))
     if ((try == 10)); then
-      echo "Could not delete old stack 10 times"
+      echo "Could not delete old stack 10 times [heat]"
       break
     fi
     output=$(heat stack-list|grep "$stack_name")
@@ -87,7 +87,7 @@ spawn_vm() {
 show_physical_host_of_vm() {
   heat_resource=$(heat resource-show ${stack_id} testnode | awk '/physical_resource_id/ { print $4 }')
   physical_host=$(nova show ${heat_resource} | awk '/hypervisor_hostname/ { print $4 }')
-  echo "Physical host for VM is ${physical_host}."
+  echo "(VM compute node: ${physical_host})"
 }
 
 # Removes the heat stack used for testing.

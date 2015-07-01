@@ -98,13 +98,13 @@ check_vm_pings() {
   pings=$(nova console-log "${testnode_id}" | grep '64 bytes from' | wc -l)
 
   if [ $pings -eq 0 ]; then
-    echo 'CRITICAL - VM could not ping its gateway.'
+    echo 'CRITICAL - VM could not ping its gateway [contrail]'
     return 2 # CRITICAL, since none got through
   elif [ $pings -ne 10 ]; then
-    echo "WARNING - Not all of the VM's pings reached its gateway (${pings}/10 got through)."
+    echo "WARNING - Not all of the VM's pings reached its gateway (${pings}/10 got through) [contrail]"
     return 1
   elif [ $pings -eq 10 ]; then
-    echo "OK - All of the VM's pings reached its gateway."
+    echo "OK - All of the VM's pings reached its gateway [contrail]"
     return 0
   fi
 }
