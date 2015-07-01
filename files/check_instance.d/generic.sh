@@ -74,7 +74,8 @@ spawn_vm() {
   fi
 
   # Wait for stack status to change from CREATE_IN_PROGRESS to CREATE_{COMPLETE,FAILED}
-  watch -g heat stack-show ${stack_id} \| grep CREATE_ > /dev/null 2>&1
+  # sometimes watch never finishes
+  timeout 30 watch -g heat stack-show ${stack_id} \| grep CREATE_ > /dev/null 2>&1
 
   if heat stack-show ${stack_id} | grep CREATE_COMPLETE > /dev/null; then
     return 0
@@ -97,7 +98,8 @@ cleanup_heat_stack() {
   if [ -n "$stack_id" ]; then
     heat stack-delete "${stack_id}" > /dev/null
 
-    watch -g heat stack-list \| grep ${stack_id} > /dev/null 2>&1
+    # sometimes watch never finishes
+    timeout 30 watch -g heat stack-list \| grep ${stack_id} > /dev/null 2>&1
 
     if heat stack-list | grep ${stack_id}; then
       return 1  # Stack still present - shouldn't happen.
