@@ -9,7 +9,7 @@ from keystoneclient.v2_0 import client as ksclient
 from neutronclient.neutron import client as neutron_client
 
 from copy import deepcopy
-
+from IPy import IP
 
 
 keystone_kwargs = {
@@ -18,6 +18,7 @@ keystone_kwargs = {
         'tenant_name': os.environ['OS_TENANT_NAME'],
         'auth_url': os.environ['OS_AUTH_URL']
 }
+
 
 def get_ksclient(**kwargs):
     """Get an endpoint and auth token from Keystone.
@@ -46,6 +47,7 @@ def get_ksclient(**kwargs):
 
     return ksclient.Client(**kc_args)
 
+
 def get_endpoint(client, **kwargs):
     """Get an endpoint using the provided keystone client."""
     if kwargs.get('region_name'):
@@ -57,6 +59,7 @@ def get_endpoint(client, **kwargs):
     return client.service_catalog.url_for(
         service_type=kwargs.get('service_type') or 'orchestration',
         endpoint_type=kwargs.get('endpoint_type') or 'publicURL')
+
 
 def dict_merge(a, b):
     '''recursively merges dict's. not just simple a['key'] = b['key'], if
@@ -72,6 +75,7 @@ def dict_merge(a, b):
         else:
             result[k] = deepcopy(v)
     return result
+
 
 def get_neutron_client(keystone_env = {}):
     _keystone_kwargs = deepcopy(keystone_kwargs)
@@ -89,7 +93,13 @@ def main():
     neutronclient = get_neutron_client()
     for net in neutronclient.list_networks()['networks']:
         if net['router:external']:
-            print(net['id'])
+            if 'contrail:subnet_ipam' in net:
+                for subnet in net['contrail:subnet_ipam']:
+                    if IP(subnet['subnet_cidr']).iptype() == 'PUBLIC' and IP(subnet['subnet_cidr']).version() == 4:
+                        print(net['id'])
+                        # first is enough for now, add more logic like
+                        # "is there a free IP" later
+                        exit()
 
 if __name__ == '__main__':
     main()
