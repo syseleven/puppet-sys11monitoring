@@ -45,7 +45,7 @@ spawn_vm() {
   while sleep 1; do
     ((try++))
     if ((try == 10)); then
-      echo "Could not delete old stack 10 times"
+      echo "Could not delete old stack 10 times [heat]"
       break
     fi
     output=$(heat stack-list|grep "$stack_name")
@@ -74,7 +74,8 @@ spawn_vm() {
   fi
 
   # Wait for stack status to change from CREATE_IN_PROGRESS to CREATE_{COMPLETE,FAILED}
-  watch -g heat stack-show ${stack_id} \| grep CREATE_ > /dev/null 2>&1
+  # sometimes watch never finishes
+  timeout 30 watch -g heat stack-show ${stack_id} \| grep CREATE_ > /dev/null 2>&1
 
   if heat stack-show ${stack_id} | grep CREATE_COMPLETE > /dev/null; then
     return 0
@@ -86,7 +87,7 @@ spawn_vm() {
 show_physical_host_of_vm() {
   heat_resource=$(heat resource-show ${stack_id} testnode | awk '/physical_resource_id/ { print $4 }')
   physical_host=$(nova show ${heat_resource} | awk '/hypervisor_hostname/ { print $4 }')
-  echo "Physical host for VM is ${physical_host}."
+  echo "(VM compute node: ${physical_host})"
 }
 
 # Removes the heat stack used for testing.
@@ -97,7 +98,8 @@ cleanup_heat_stack() {
   if [ -n "$stack_id" ]; then
     heat stack-delete "${stack_id}" > /dev/null
 
-    watch -g heat stack-list \| grep ${stack_id} > /dev/null 2>&1
+    # sometimes watch never finishes
+    timeout 30 watch -g heat stack-list \| grep ${stack_id} > /dev/null 2>&1
 
     if heat stack-list | grep ${stack_id}; then
       return 1  # Stack still present - shouldn't happen.
