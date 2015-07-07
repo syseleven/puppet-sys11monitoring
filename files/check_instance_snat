@@ -71,7 +71,7 @@ fi
 #exit
 
 # Check if VM launches.
-if spawn_vm "${lockdir}/template.yaml" check_instance_snat; then
+if spawn_vm "${lockdir}/template.yaml" check_instance_snat_$HOSTNAME; then
   echo "OK - instance launched successfully [heat/nova]"
   show_physical_host_of_vm
   # Check if VM can reach its gateway.
