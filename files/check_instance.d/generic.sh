@@ -42,7 +42,7 @@ spawn_vm() {
   # try to delete old stack 10 times
   # (should not exist, but does, because heat stack-delete
   # may fail at cleanup because of unstable heat api)
-  while sleep 1; do
+  while sleep 5; do
     ((try++))
     if ((try == 10)); then
       echo "Could not delete old stack 10 times [heat]"
