@@ -118,7 +118,7 @@ class sys11monitoring::profile::generic_host(
     }
 
     sensu::check { 'check_oomkiller':
-      command => "${nagios::nrpe::plugindir}/check_oomkiller",
+      command => "/usr/lib/nagios/plugins/check_oomkiller",
     }
 
   }
