@@ -110,8 +110,7 @@ class sys11monitoring::profile::generic_host(
     }
 
     sensu::check { 'check_outgoing_ip':
-      cmd     => "/usr/lib/nagios/plugins/check_outgoing_ip",
-      require => File['check_outgoing_ip'],
+      command     => "/usr/lib/nagios/plugins/check_outgoing_ip",
     }
 
   }
