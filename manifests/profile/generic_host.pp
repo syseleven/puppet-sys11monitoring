@@ -106,7 +106,12 @@ class sys11monitoring::profile::generic_host(
     }
 
     sensu::check  { 'check_total_procs':
-      command => "/usr/lib/nagios/plugins//check_procs -w ${total_procs_warn_limit} -c ${total_procs_crit_limit}",
+      command => "/usr/lib/nagios/plugins/check_procs -w ${total_procs_warn_limit} -c ${total_procs_crit_limit}",
+    }
+
+    sensu::check { 'check_outgoing_ip':
+      cmd     => "/usr/lib/nagios/plugins/check_outgoing_ip",
+      require => File['check_outgoing_ip'],
     }
 
   }
