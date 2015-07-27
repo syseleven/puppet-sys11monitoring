@@ -101,13 +101,26 @@ class sys11monitoring::profile::generic_host(
       require      => File['/usr/lib/nagios/plugins/check_upstart_respawn_loop'],
     }
 
-    sensu::check  { 'check_zombie_procs':
-      command => "/usr/lib/nagios/plugins/check_procs -w ${zombie_procs_warn_limit} -c ${zombie_procs_crit_limit} -s Z",
+  }
+
+  sensu::check  { 'check_zombie_procs':
+    command => "/usr/lib/nagios/plugins/check_procs -w ${zombie_procs_warn_limit} -c ${zombie_procs_crit_limit} -s Z",
+  }
+
+  sensu::check  { 'check_total_procs':
+    command => "/usr/lib/nagios/plugins/check_procs -w ${total_procs_warn_limit} -c ${total_procs_crit_limit}",
+  }
+
+  if $::virtual == openvz {
+
+    sensu::check { 'check_outgoing_ip':
+      command     => "/usr/lib/nagios/plugins/check_outgoing_ip",
     }
 
-    sensu::check  { 'check_total_procs':
-      command => "/usr/lib/nagios/plugins/check_procs -w ${total_procs_warn_limit} -c ${total_procs_crit_limit}",
+    sensu::check { 'check_oomkiller':
+      command => "${nagios::nrpe::plugindir}/check_oomkiller",
     }
 
   }
+
 }
