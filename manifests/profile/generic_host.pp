@@ -1,4 +1,8 @@
 class sys11monitoring::profile::generic_host(
+  $zombie_procs_warn_limit = 2,
+  $zombie_procs_crit_limit = 5,
+  $total_procs_warn_limit = 150,
+  $total_procs_crit_limit = 200,
   $check_reboot_needed = false,
 ) {
   # iso9660 is /config metadata filesystem, it always is 100%
