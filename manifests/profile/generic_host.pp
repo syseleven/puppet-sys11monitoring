@@ -97,11 +97,11 @@ class sys11monitoring::profile::generic_host(
       require      => File['/usr/lib/nagios/plugins/check_upstart_respawn_loop'],
     }
 
-    nagios::nrpecmd { 'check_zombie_procs':
+    sensu::check  { 'check_zombie_procs':
       cmd => "/usr/lib/nagios/plugins/check_procs -w ${zombie_procs_warn_limit} -c ${zombie_procs_crit_limit} -s Z",
     }
 
-    nagios::nrpecmd { 'check_total_procs':
+    sensu::check  { 'check_total_procs':
       cmd => "/usr/lib/nagios/plugins//check_procs -w ${total_procs_warn_limit} -c ${total_procs_crit_limit}",
     }
 
