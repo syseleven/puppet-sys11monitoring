@@ -98,11 +98,11 @@ class sys11monitoring::profile::generic_host(
     }
 
     sensu::check  { 'check_zombie_procs':
-      cmd => "/usr/lib/nagios/plugins/check_procs -w ${zombie_procs_warn_limit} -c ${zombie_procs_crit_limit} -s Z",
+      command => "/usr/lib/nagios/plugins/check_procs -w ${zombie_procs_warn_limit} -c ${zombie_procs_crit_limit} -s Z",
     }
 
     sensu::check  { 'check_total_procs':
-      cmd => "/usr/lib/nagios/plugins//check_procs -w ${total_procs_warn_limit} -c ${total_procs_crit_limit}",
+      command => "/usr/lib/nagios/plugins//check_procs -w ${total_procs_warn_limit} -c ${total_procs_crit_limit}",
     }
 
   }
