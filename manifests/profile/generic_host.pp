@@ -1,4 +1,8 @@
 class sys11monitoring::profile::generic_host(
+  $zombie_procs_warn_limit = 2,
+  $zombie_procs_crit_limit = 5,
+  $total_procs_warn_limit = 150,
+  $total_procs_crit_limit = 200,
   $check_reboot_needed = false,
 ) {
   # iso9660 is /config metadata filesystem, it always is 100%
@@ -17,7 +21,6 @@ class sys11monitoring::profile::generic_host(
     command => '/usr/lib/nagios/plugins/check_hn_load -p /usr/lib/nagios/plugins -w  -c',
     require => File['/usr/lib/nagios/plugins/check_hn_load'],
   }
-
 
   file {'/usr/lib/nagios/plugins/check_ram':
     ensure => file,
@@ -96,5 +99,37 @@ class sys11monitoring::profile::generic_host(
       },
       require      => File['/usr/lib/nagios/plugins/check_upstart_respawn_loop'],
     }
+
   }
+
+  sensu::check  { 'check_zombie_procs':
+    command => "/usr/lib/nagios/plugins/check_procs -w ${zombie_procs_warn_limit} -c ${zombie_procs_crit_limit} -s Z",
+  }
+
+  sensu::check  { 'check_total_procs':
+    command => "/usr/lib/nagios/plugins/check_procs -w ${total_procs_warn_limit} -c ${total_procs_crit_limit}",
+  }
+
+  if $::virtual == 'openvz' {
+
+    file { 'check_outgoing_ip':
+      path   => "${nagios::nrpe::plugindir}/check_outgoing_ip",
+      source => 'puppet:///modules/ve_base/check_outgoing_ip',
+    }
+
+    sensu::check { 'check_outgoing_ip':
+      command     => "/usr/lib/nagios/plugins/check_outgoing_ip",
+    }
+
+    file { 'check_oomkiller':
+      path   => "${nagios::nrpe::plugindir}/check_oomkiller",
+      source => 'puppet:///modules/ve_base/check_oomkiller',
+    }
+
+    sensu::check { 'check_oomkiller':
+      command => "/usr/lib/nagios/plugins/check_oomkiller",
+    }
+
+  }
+
 }
