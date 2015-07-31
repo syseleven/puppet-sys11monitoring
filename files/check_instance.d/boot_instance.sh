@@ -24,7 +24,7 @@ description: >
 parameters:
   image:
     type: string
-    default: CirrOS 0.3.2 amd64
+    default: CirrOS 0.3.4 amd64
     description: Name of image to use for test instance
   flavor_testnode:
     type: string
