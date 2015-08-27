@@ -114,6 +114,7 @@ class sys11monitoring::profile::generic_host(
 
     file { 'check_outgoing_ip':
       path   => "/usr/lib/nagios/plugins/check_outgoing_ip",
+      mode   => '0555',
       source => "puppet:///modules/${module_name}/check_outgoing_ip",
     }
 
@@ -123,6 +124,7 @@ class sys11monitoring::profile::generic_host(
 
     file { 'check_oomkiller':
       path   => "/usr/lib/nagios/plugins/check_oomkiller",
+      mode   => '0555',
       source => "puppet:///modules/${module_name}/check_oomkiller",
     }
 
