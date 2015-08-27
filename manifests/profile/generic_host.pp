@@ -114,7 +114,7 @@ class sys11monitoring::profile::generic_host(
 
     file { 'check_outgoing_ip':
       path   => "${nagios::nrpe::plugindir}/check_outgoing_ip",
-      source => 'puppet:///modules/ve_base/check_outgoing_ip',
+      source => "puppet:///modules/${module_name}/check_outgoing_ip",
     }
 
     sensu::check { 'check_outgoing_ip':
@@ -123,7 +123,7 @@ class sys11monitoring::profile::generic_host(
 
     file { 'check_oomkiller':
       path   => "${nagios::nrpe::plugindir}/check_oomkiller",
-      source => 'puppet:///modules/ve_base/check_oomkiller',
+      source => "puppet:///modules/${module_name}/check_oomkiller",
     }
 
     sensu::check { 'check_oomkiller':
