@@ -1,0 +1,20 @@
+#!/bin/bash
+# 2013, s.andres@syseleven.de
+
+PATH=$PATH:/usr/sbin/:/usr/lib64/nagios/plugins/:/usr/lib/nagios/plugins/
+
+hn_name=$HOSTNAME
+
+if [[ -f /.oomkiller ]]; then
+  if output=$(check_log -F /.oomkiller -O /tmp/check_oomkiller.tmp -q "kernel:.*OOM killed process " 2>&1); then
+    echo "OK - no OOM found ($output)"
+    exit 0
+  else
+    echo "WARNING - $output"
+    exit 1
+  fi
+else
+    echo "OK - no OOM found"
+    exit 0
+fi
+
