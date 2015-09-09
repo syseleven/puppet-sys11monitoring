@@ -1,10 +1,11 @@
 # Deploys sensu checks for an Openstack controller.
 class sys11monitoring::profile::openstack_controller(
-  $auth_url         = hiera('sys11stack::keystone::auth_url_public'),
-  $admin_user       = hiera('keystone::roles::admin::admin'),
-  $admin_password   = hiera('keystone::roles::admin::password'),
-  $admin_tenant     = hiera('keystone::roles::admin::admin_tenant'),
-  $monitoring       = hiera('sys11stack::monitoring', false),
+  $auth_url       = hiera('sys11stack::keystone::auth_url_public'),
+  $admin_user     = hiera('keystone::roles::admin::admin'),
+  $admin_password = hiera('keystone::roles::admin::password'),
+  $admin_tenant   = hiera('keystone::roles::admin::admin_tenant'),
+  $monitoring     = hiera('sys11stack::monitoring', false),
+  $type           = hiera('sys11monitoring::type', 'off'),
 ) {
 
   define add_check_instance() {

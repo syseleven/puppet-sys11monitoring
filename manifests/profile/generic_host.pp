@@ -4,6 +4,7 @@ class sys11monitoring::profile::generic_host(
   $total_procs_warn_limit = 150,
   $total_procs_crit_limit = 200,
   $check_reboot_needed = false,
+  $type = 'sensu',
 ) {
   # iso9660 is /config metadata filesystem, it always is 100%
   sensu::check { 'diskspace':
