@@ -24,8 +24,8 @@ fi
 
 # Load openrc if available
 
-if [ -r /root/openrc ]; then
-  . /root/openrc
+if [ -r /root/admin-openrc.sh ]; then
+  . /root/admin-openrc.sh
 fi
 
 # Load functions

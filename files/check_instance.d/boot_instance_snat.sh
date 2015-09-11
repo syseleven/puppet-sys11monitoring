@@ -10,8 +10,8 @@ snat_dest=8.8.8.8
 # Write out Heat template used for spawning a test instance.
 
 get_public_net_id() {
-  if [ -r /root/openrc ]; then
-    . /root/openrc
+  if [ -r /root/admin-openrc.sh ]; then
+    . /root/admin-openrc.sh
   fi
 
   PATH=$PATH:/usr/lib/nagios/plugins/check_instance.d/
