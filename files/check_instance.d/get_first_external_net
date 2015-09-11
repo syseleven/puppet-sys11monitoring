@@ -5,7 +5,7 @@
 
 import os
 
-from keystoneclient.v2_0 import client as ksclient
+from keystoneclient.v3 import client as ksclient
 from neutronclient.neutron import client as neutron_client
 
 from copy import deepcopy
@@ -83,7 +83,7 @@ def get_neutron_client(keystone_env = {}):
     _keystone_kwargs['service_type'] = 'network'
     _keystone_kwargs = dict_merge(_keystone_kwargs, keystone_env)
     endpoint = get_endpoint(ksclient, **_keystone_kwargs)
-    client = neutron_client.Client('2.0', endpoint_url=endpoint, token=ksclient.auth_ref['token']['id'], **_keystone_kwargs)
+    client = neutron_client.Client('2.0', endpoint_url=endpoint, token=ksclient.auth_ref['auth_token'], **_keystone_kwargs)
 
     return client
 
@@ -93,13 +93,15 @@ def main():
     neutronclient = get_neutron_client()
     for net in neutronclient.list_networks()['networks']:
         if net['router:external']:
-            if 'contrail:subnet_ipam' in net:
-                for subnet in net['contrail:subnet_ipam']:
-                    if IP(subnet['subnet_cidr']).iptype() == 'PUBLIC' and IP(subnet['subnet_cidr']).version() == 4:
-                        print(net['id'])
-                        # first is enough for now, add more logic like
-                        # "is there a free IP" later
-                        exit()
+            print(net['id'])
+            exit()
+            # TODO implement when IPv6 is there again
+            #for subnet in net['contrail:subnet_ipam']:
+            #    if IP(subnet['subnet_cidr']).iptype() == 'PUBLIC' and IP(subnet['subnet_cidr']).version() == 4:
+            #        print(net['id'])
+            #        # first is enough for now, add more logic like
+            #        # "is there a free IP" later
+            #        exit()
 
 if __name__ == '__main__':
     main()
