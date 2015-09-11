@@ -72,9 +72,11 @@ resources:
         exec > /var/log/script_user_data.log 2>&1
         set -x
 
-        gateway=$(ip route show | grep default | awk '{print $3}')
-
-        ping -c 10 $gateway > /dev/console
+        if curl -I http://169.254.169.254 | grep -q 'HTTP/1.1 200 OK'; then
+          echo "TESTVM: OK - got metadata" > /dev/console
+        else
+          echo "TESTVM: CRITICAL - got no metadata" > /dev/console
+        fi
 
   testnode_admin_port:
     type: OS::Neutron::Port
@@ -91,20 +93,20 @@ EOF
 
 
 
-check_vm_pings() {
+check_network() {
   sleep 45
   testnode_id=$(heat output-show "$stack_id" testnode_id | sed 's/"//g')
 
-  pings=$(nova console-log "${testnode_id}" | grep '64 bytes from' | wc -l)
+  ret=$(nova console-log "${testnode_id}" | grep 'TESTVM:')
 
-  if [ $pings -eq 0 ]; then
-    echo 'CRITICAL - VM could not ping its gateway [contrail]'
+  if [[ $ret = *CRITICAL* ]]; then
+    echo 'CRITICAL - VM could not get metadata [midonet]'
     return 2 # CRITICAL, since none got through
-  elif [ $pings -ne 10 ]; then
-    echo "WARNING - Not all of the VM's pings reached its gateway (${pings}/10 got through) [contrail]"
-    return 1
-  elif [ $pings -eq 10 ]; then
-    echo "OK - All of the VM's pings reached its gateway [contrail]"
+  elif [[ $ret = *OK* ]]; then
+    echo "OK - VM could access metadata URL [midonet]"
     return 0
+  else
+    echo 'Unkown - VM could not get metadata and script got no return value [midonet]'
+    return 2
   fi
 }
