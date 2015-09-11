@@ -5,7 +5,8 @@
 stack_id=''              # ID of the Heat stack to use.
 image_id=''              # ID of the Glance image to use.
 
-snat_dest=8.8.8.8
+# 37.123.105.116 is a sys11 GTM
+snat_dest=37.123.105.116
 
 # Write out Heat template used for spawning a test instance.
 
