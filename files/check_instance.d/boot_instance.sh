@@ -28,7 +28,7 @@ parameters:
     description: Name of image to use for test instance
   flavor_testnode:
     type: string
-    default: m1.tiny
+    default: m1.micro
     description: Flavor to use for test instance
  
 resources:
