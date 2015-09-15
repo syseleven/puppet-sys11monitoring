@@ -76,7 +76,7 @@ class sys11monitoring::profile::openstack_controller(
       # Check for working instance boot (Indicates working Nova, Glance and Heat)
 
       ensure_packages(['python-ipy'])
-      add_check_instance { ['instance_boot', 'instance_snat']: }
+      add_check_instance { ['instance_boot', 'instance_snat', 'instance_floatingip']: }
     }
     false: { }
     default: { fail("Only sensu monitoring supported ('$monitoring' given)") }
