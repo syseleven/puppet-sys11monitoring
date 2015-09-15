@@ -54,7 +54,7 @@ resources:
         exec > /var/log/script_user_data.log 2>&1
         set -x
 
-        #sleep 10
+        sleep 15
         ping -c 10 $snat_dest > /dev/console
 
   server2_port:
@@ -128,7 +128,7 @@ EOF
 
 
 check_vm_pings() {
-  sleep 20
+  sleep 45
   testnode_id=$(heat output-show "$stack_id" testnode_id | sed 's/"//g')
 
   pings=$(nova console-log "${testnode_id}" | grep '64 bytes from' | wc -l)

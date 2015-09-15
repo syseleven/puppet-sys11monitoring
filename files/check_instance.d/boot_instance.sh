@@ -72,6 +72,7 @@ resources:
         exec > /var/log/script_user_data.log 2>&1
         set -x
 
+        sleep 15
         if curl -I http://169.254.169.254 | grep -q 'HTTP/1.1 200 OK'; then
           echo "TESTVM: OK - got metadata" > /dev/console
         else
