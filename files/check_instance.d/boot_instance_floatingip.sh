@@ -138,7 +138,7 @@ EOF
 
 
 check_vm_pings() {
-  sleep 45
+  sleep 30
   testnode_id=$(heat output-show "$stack_id" testnode_id | sed 's/"//g')
   floating_ip=$(heat output-show "$stack_id" floating_ip | sed 's/"//g')
 

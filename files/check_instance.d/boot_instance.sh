@@ -95,7 +95,7 @@ EOF
 
 
 check_network() {
-  sleep 45
+  sleep 30
   testnode_id=$(heat output-show "$stack_id" testnode_id | sed 's/"//g')
 
   ret=$(nova console-log "${testnode_id}" | grep 'TESTVM:')

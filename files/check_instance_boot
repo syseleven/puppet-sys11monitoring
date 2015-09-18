@@ -44,25 +44,12 @@ write_heat_template "${lockdir}/template.yaml"
 if spawn_vm "${lockdir}/template.yaml" check_instance_boot_$HOSTNAME; then
   echo "OK - instance launched successfully [heat]"
   show_physical_host_of_vm
-  # Check if VM can reach its gateway.
   check_network
-  exit $?
-  # do not clean up for now, keep the broken stack for debugging there
   retval=$?
   if ((retval)); then
-    if ! cleanup_heat_stack; then
-      echo "WARNING - couldn't clean up test stack (still present) [heat]"
-    fi
     exit $retval
+  else
+    cleanup_heat_stack
+    exit 0
   fi
-
-  if ! cleanup_heat_stack; then
-    echo "WARNING - couldn't clean up test stack (still present) [heat]"
-    exit 1
-  fi
-  exit 0
-else
-  echo 'CRITICAL - check_instance_boot: could not launch instance [heat]'
-  cleanup_heat_stack
-  exit 2
 fi
