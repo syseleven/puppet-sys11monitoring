@@ -6,7 +6,7 @@
 
 # Directory for all state related to sensu checks
 
-lockdir=/tmp/check_instance_snat.lock
+lockdir=/tmp/check_instance_floatingip.lock
 if mkdir "$lockdir"; then
   #echo >&2 "successfully acquired lock"
 
