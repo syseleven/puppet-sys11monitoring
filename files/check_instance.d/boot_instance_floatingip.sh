@@ -159,10 +159,10 @@ check_vm_pings() {
   fi
 
   if [[ $curl_ret == *$floating_ip* ]]; then
-    echo "OK - VMs IP ($floating_ip) is the actual outgoing IP)"
+    echo "OK - VMs IP ($floating_ip) is the actual outgoing IP"
     return 0
   else  
-    echo "OK - VMs IP ($floating_ip) is NOT the actual outgoing IP ($curl_ret))"
+    echo "OK - VMs IP ($floating_ip) is NOT the actual outgoing IP ($curl_ret)"
     return 1
   fi
   return 0
