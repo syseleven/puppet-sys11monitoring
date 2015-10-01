@@ -28,7 +28,10 @@ class sys11monitoring::profile::openstack_controller(
       require     => [ File['/usr/lib/nagios/plugins/check_instance_boot'], File_line['sudo_check_instance_boot' ] ],
       interval    => '600',
       occurrences => '2',
-      timeout     => '120',
+      timeout     => '180',
+      custom      => {
+        'summary' => 2,
+      }
     }
   }
 
