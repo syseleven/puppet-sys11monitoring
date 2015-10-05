@@ -41,7 +41,9 @@ write_heat_template "${lockdir}/template.yaml"
 # Launch Heat stack
 
 # Check if VM launches.
-if spawn_vm "${lockdir}/template.yaml" check_instance_floatingip_$HOSTNAME; then
+spawn_vm "${lockdir}/template.yaml" check_instance_floatingip_$HOSTNAME
+spawn_retval=$?
+if ((! spawn_retval)); then
   echo "OK - instance launched successfully [heat/nova]"
   show_physical_host_of_vm
   check_vm_pings
@@ -53,6 +55,6 @@ if spawn_vm "${lockdir}/template.yaml" check_instance_floatingip_$HOSTNAME; then
     exit 0
   fi
 else
-  echo "CRITICAL: could not create stack [heat]"
-  exit 2
+  echo "$spawn_retval: could not create stack [heat]"
+  exit $spawn_retval
 fi
