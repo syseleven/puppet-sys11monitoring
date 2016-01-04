@@ -148,13 +148,13 @@ check_vm_pings() {
   #nova console-log "${testnode_id}"
 
   if [ $pings -eq 0 ]; then
-    echo "CRITICAL - VM could not ping $snat_dest [midonet]"
+    echo "CRITICAL - VM ${testnode_id} could not ping $snat_dest [midonet]"
     return 2 # CRITICAL, since none got through
   elif [ $pings -ne 10 ]; then
-    echo "WARNING - Not all of the VM's pings reached $snat_dest (${pings}/10 got through) [midonet]"
+    echo "WARNING - Not all of the VM's (${testnode_id}) pings reached $snat_dest (${pings}/10 got through) [midonet]"
     return 1
   elif [ $pings -eq 10 ]; then
-    echo "OK - All of the VM's pings reached $snat_dest [midonet]"
+    echo "OK - All of the VM's (${testnode_id}) pings reached $snat_dest [midonet]"
     #return 0
   fi
 
