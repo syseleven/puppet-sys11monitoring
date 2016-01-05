@@ -101,13 +101,13 @@ check_network() {
   ret=$(nova console-log "${testnode_id}" | grep 'TESTVM:')
 
   if [[ $ret = *CRITICAL* ]]; then
-    echo 'CRITICAL - VM could not get metadata [midonet]'
+    echo 'CRITICAL - VM ${testnode_id} could not get metadata [midonet]'
     return 2 # CRITICAL, since none got through
   elif [[ $ret = *OK* ]]; then
-    echo "OK - VM could access metadata URL [midonet]"
+    echo "OK - VM ${testnode_id} could access metadata URL [midonet]"
     return 0
   else
-    echo 'Unkown - VM could not get metadata and script got no return value [midonet]'
+    echo 'Unkown - VM ${testnode_id} could not get metadata and script got no return value [midonet]'
     return 2
   fi
 }
