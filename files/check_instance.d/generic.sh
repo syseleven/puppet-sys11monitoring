@@ -100,16 +100,16 @@ show_physical_host_of_vm() {
 cleanup_heat_stack() {
   rm "${heat_template}"
 
-#  if [ -n "$stack_id" ]; then
-#    heat stack-delete "${stack_id}" > /dev/null
-#  
-#    # sometimes watch never finishes
-#    timeout 30 watch -g heat stack-list \| grep ${stack_id} > /dev/null 2>&1
-#
-#    if heat stack-list | grep ${stack_id}; then
-#      return 1  # Stack still present - shouldn't happen.
-#    else
-#      return 0
-#    fi
-#  fi
+  if [ -n "$stack_id" ]; then
+    heat stack-delete "${stack_id}" > /dev/null
+  
+    # sometimes watch never finishes
+    timeout 30 watch -g heat stack-list \| grep ${stack_id} > /dev/null 2>&1
+
+    if heat stack-list | grep ${stack_id}; then
+      return 1  # Stack still present - shouldn't happen.
+    else
+      return 0
+    fi
+  fi
 }
